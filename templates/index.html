@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王文倩的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            padding: 20px;
+        }
+        .sidebar {
+            width: 180px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 0 0 20px;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sidebar-label {
+            padding: 14px 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            user-select: none;
+        }
+        .sidebar-label:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .sidebar-label.active {
+            color: #fff;
+            background: rgba(255,255,255,0.2);
+            border-left-color: #fff;
+            font-weight: bold;
+        }
+        .main-area {
+            flex: 1;
+            background: white;
+            border-radius: 0 20px 20px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+        }
+        .tool-panel {
+            display: none;
+        }
+        .tool-panel.active {
+            display: block;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        .upload-area p {
+            color: #666;
+            font-size: 16px;
+        }
+        .upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            margin: 30px auto 0;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            color: #333;
+            font-size: 22px;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .img-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .img-upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .img-upload-area p {
+            color: #888;
+            font-size: 14px;
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f0fe;
+            border-radius: 8px;
+            display: none;
+        }
+        .file-info.show {
+            display: block;
+        }
+        .file-info .filename {
+            font-weight: bold;
+            color: #333;
+        }
+        .file-info .remove-file {
+            color: #ff4444;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .download-link {
+            color: #667eea;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .records-list {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+        .records-list h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .record-item {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .record-item:last-child {
+            margin-bottom: 0;
+        }
+        .record-info {
+            color: #555;
+        }
+        .record-remove {
+            color: #ff4444;
+            cursor: pointer;
+        }
+
+        /* ===== 群发消息工具样式 ===== */
+        .msg-columns {
+            display: flex;
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .msg-column {
+            flex: 1;
+        }
+        .msg-column-name {
+            flex: 0 0 100px;
+        }
+        .msg-column-idx {
+            flex: 0 0 60px;
+        }
+        .msg-column h3 {
+            text-align: center;
+            color: #555;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        .msg-item {
+            padding: 8px 14px;
+            margin-bottom: 6px;
+            background: #f8f9ff;
+            border: 1px solid #e0e4f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #333;
+            word-break: break-all;
+            text-align: center;
+        }
+        .msg-item:hover {
+            background: #e8ecff;
+            border-color: #667eea;
+        }
+        .msg-item.copied {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .msg-hint {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-label active" data-tool="excel">📋 Excel录入</div>
+        <div class="sidebar-label" data-tool="message">💬 群发消息</div>
+    </div>
+
+    <div class="main-area">
+        <!-- ===== Excel录入工具 ===== -->
+        <div class="tool-panel active" id="panel-excel">
+            <h1>🏃‍♂️幼儿运动、饮食照顾记录</h1>
+
+            <div class="section">
+                <label>上传 Excel 文件（支持拖动上传、复制粘贴）</label>
+                <div class="upload-area" id="uploadArea">
+                    <div class="icon">📁</div>
+                    <p>将Excel文件拖拽到此处，或点击选择文件</p>
+                    <p style="font-size: 12px; color: #999; margin-top: 5px;">支持 .xls 格式</p>
+                </div>
+                <input type="file" id="fileInput" accept=".xls" style="display: none;">
+                <div class="file-info" id="fileInfo">
+                    <span class="filename" id="fileName"></span>
+                    <span class="remove-file" id="removeFile">删除</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <label for="recorderName">记录人名字</label>
+                <input type="text" id="recorderName" placeholder="请输入记录人姓名">
+            </div>
+
+            <div class="records-list" id="recordsList" style="display: none;">
+                <h3>待填充记录</h3>
+                <div id="recordsContainer"></div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" id="addRecordBtn" disabled>添加记录</button>
+                <button class="btn btn-secondary" id="fillBtn" disabled>填写</button>
+            </div>
+
+            <div class="message" id="message"></div>
+        </div>
+
+        <!-- ===== 群发消息工具 ===== -->
+        <div class="tool-panel" id="panel-message">
+            <h1>💬 群发家长消息</h1>
+
+            <div class="section">
+                <label for="msgContent">输入消息内容</label>
+                <textarea id="msgContent" rows="3" placeholder="请输入要群发给家长的消息内容，例如：明天请带好水杯"></textarea>
+            </div>
+
+            <button class="btn" id="generateMsgBtn">生成消息</button>
+
+            <div id="msgResult" style="display:none;">
+                <div class="msg-columns">
+                    <div class="msg-column msg-column-idx">
+                        <h3>序号</h3>
+                        <div id="idxColumn"></div>
+                    </div>
+                    <div class="msg-column msg-column-name">
+                        <h3>👦 姓名</h3>
+                        <div id="nameColumn"></div>
+                    </div>
+                    <div class="msg-column">
+                        <h3>👩 妈妈</h3>
+                        <div id="momColumn"></div>
+                    </div>
+                    <div class="msg-column">
+                        <h3>👨 爸爸</h3>
+                        <div id="dadColumn"></div>
+                    </div>
+                </div>
+                <div class="msg-hint">点击任意一条消息即可复制</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 添加记录弹窗 ===== -->
+    <div class="modal" id="recordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加记录</h2>
+                <button class="close-btn" id="closeModal">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>第几周</label>
+                <input type="number" id="weekInput" min="1" max="52" value="1">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>月份</label>
+                    <input type="number" id="monthInput" min="1" max="12" value="1">
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="number" id="dayInput" min="1" max="31" value="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>本周菜谱图片（可选）</label>
+                <div class="img-upload-area" id="imgUploadArea">
+                    <p>📷 将图片拖拽到此处，或点击选择图片</p>
+                    <p style="font-size: 12px; color: #999; margin-top: 5px;">支持 JPG、PNG 格式</p>
+                </div>
+                <input type="file" id="imgInput" accept="image/*" multiple style="display: none;">
+                <div class="preview-container" id="previewContainer"></div>
+            </div>
+
+            <button class="btn" id="saveRecordBtn">保存</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== 工具切换 =====
+        const sidebarLabels = document.querySelectorAll('.sidebar-label');
+        const toolPanels = document.querySelectorAll('.tool-panel');
+
+        sidebarLabels.forEach(label => {
+            label.addEventListener('click', () => {
+                sidebarLabels.forEach(l => l.classList.remove('active'));
+                toolPanels.forEach(p => p.classList.remove('active'));
+                label.classList.add('active');
+                document.getElementById('panel-' + label.dataset.tool).classList.add('active');
+            });
+        });
+
+        // ===== Excel录入工具逻辑 =====
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+        const recorderName = document.getElementById('recorderName');
+        const addRecordBtn = document.getElementById('addRecordBtn');
+        const fillBtn = document.getElementById('fillBtn');
+        const recordModal = document.getElementById('recordModal');
+        const closeModal = document.getElementById('closeModal');
+        const saveRecordBtn = document.getElementById('saveRecordBtn');
+        const imgUploadArea = document.getElementById('imgUploadArea');
+        const imgInput = document.getElementById('imgInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const message = document.getElementById('message');
+        const recordsList = document.getElementById('recordsList');
+        const recordsContainer = document.getElementById('recordsContainer');
+
+        let selectedFile = null;
+        let uploadedImages = [];
+        let addedRecords = [];
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.xls')) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    const file = item.getAsFile();
+                    if (selectedFile) {
+                        handleFileSelect(file);
+                    }
+                }
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        async function handleFileSelect(file) {
+            if (!file.name.endsWith('.xls')) {
+                showMessage('请选择 .xls 格式的文件', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileInfo.classList.add('show');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.text();
+
+                if (result === 'File uploaded successfully') {
+                    showMessage('文件上传成功', 'success');
+                    updateButtons();
+                } else {
+                    showMessage(result, 'error');
+                    selectedFile = null;
+                    fileInfo.classList.remove('show');
+                }
+            } catch (error) {
+                showMessage('上传失败: ' + error.message, 'error');
+                selectedFile = null;
+                fileInfo.classList.remove('show');
+            }
+        }
+
+        removeFile.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            addedRecords = [];
+            recordsContainer.innerHTML = '';
+            recordsList.style.display = 'none';
+            updateButtons();
+        });
+
+        recorderName.addEventListener('input', updateButtons);
+
+        function updateButtons() {
+            const hasFile = selectedFile;
+            const hasRecords = addedRecords.length > 0;
+            const hasRecorder = recorderName.value.trim() !== '';
+
+            addRecordBtn.disabled = !hasFile;
+            fillBtn.disabled = !hasFile || !hasRecords || !hasRecorder;
+        }
+
+        addRecordBtn.addEventListener('click', () => {
+            recordModal.classList.add('show');
+        });
+
+        closeModal.addEventListener('click', () => {
+            recordModal.classList.remove('show');
+        });
+
+        recordModal.addEventListener('click', (e) => {
+            if (e.target === recordModal) {
+                recordModal.classList.remove('show');
+            }
+        });
+
+        imgUploadArea.addEventListener('click', () => imgInput.click());
+
+        imgUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imgUploadArea.style.borderColor = '#667eea';
+            imgUploadArea.style.background = '#f8f9ff';
+        });
+
+        imgUploadArea.addEventListener('dragleave', () => {
+            imgUploadArea.style.borderColor = '#ddd';
+            imgUploadArea.style.background = 'white';
+        });
+
+        imgUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imgUploadArea.style.borderColor = '#ddd';
+            imgUploadArea.style.background = 'white';
+            const files = e.dataTransfer.files;
+            handleImageFiles(files);
+        });
+
+        imgInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFiles(e.target.files);
+            }
+        });
+
+        function handleImageFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    uploadedImages.push(file);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `
+                            <img src="${e.target.result}">
+                            <button class="remove-btn" onclick="removeImage(this, '${file.name}')">×</button>
+                        `;
+                        previewContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        window.removeImage = function(btn, filename) {
+            uploadedImages = uploadedImages.filter(f => f.name !== filename);
+            btn.parentElement.remove();
+        };
+
+        saveRecordBtn.addEventListener('click', async () => {
+            const week = document.getElementById('weekInput').value;
+            const month = document.getElementById('monthInput').value;
+            const day = document.getElementById('dayInput').value;
+
+            if (!selectedFile) {
+                showMessage('请先上传Excel文件', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('week', week);
+            formData.append('month', month);
+            formData.append('day', day);
+            formData.append('recorder_name', recorderName.value);
+
+            for (let i = 0; i < uploadedImages.length; i++) {
+                formData.append('images[]', uploadedImages[i]);
+            }
+
+            saveRecordBtn.disabled = true;
+            saveRecordBtn.textContent = '保存中...';
+
+            try {
+                const response = await fetch('/add_record', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (result === 'Record added successfully') {
+                    showMessage('记录添加成功', 'success');
+                    recordModal.classList.remove('show');
+
+                    addedRecords.push({
+                        week: week,
+                        month: month,
+                        day: day
+                    });
+                    updateRecordsList();
+                    updateButtons();
+
+                    uploadedImages = [];
+                    previewContainer.innerHTML = '';
+                    document.getElementById('weekInput').value = '1';
+                    document.getElementById('monthInput').value = '1';
+                    document.getElementById('dayInput').value = '1';
+                } else {
+                    showMessage(result, 'error');
+                }
+            } catch (error) {
+                showMessage('保存失败: ' + error.message, 'error');
+            } finally {
+                saveRecordBtn.disabled = false;
+                saveRecordBtn.textContent = '保存';
+            }
+        });
+
+        function updateRecordsList() {
+            recordsList.style.display = 'block';
+            recordsContainer.innerHTML = '';
+            addedRecords.forEach((record, index) => {
+                const div = document.createElement('div');
+                div.className = 'record-item';
+                div.innerHTML = `
+                    <span class="record-info">第${record.week}周 ${record.month}月${record.day}日</span>
+                    <span class="record-remove" onclick="removeRecord(${index})">删除</span>
+                `;
+                recordsContainer.appendChild(div);
+            });
+        }
+
+        window.removeRecord = function(index) {
+            addedRecords.splice(index, 1);
+            updateRecordsList();
+            updateButtons();
+            if (addedRecords.length === 0) {
+                recordsList.style.display = 'none';
+            }
+        };
+
+        fillBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showMessage('请先上传Excel文件', 'error');
+                return;
+            }
+
+            if (!recorderName.value.trim()) {
+                showMessage('请输入记录人名字', 'error');
+                return;
+            }
+
+            if (addedRecords.length === 0) {
+                showMessage('请先添加记录', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('recorder_name', recorderName.value);
+
+            fillBtn.disabled = true;
+            fillBtn.textContent = '填写中...';
+
+            try {
+                const response = await fetch('/fill_excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.headers.get('Content-Type')?.includes('application/json')) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage('填写成功，正在下载...', 'success');
+                        setTimeout(() => {
+                            window.location.href = result.download_url;
+                        }, 500);
+                    } else {
+                        showMessage(result.message, 'error');
+                    }
+                } else {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = selectedFile.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showMessage('填写成功，文件已下载', 'success');
+                }
+            } catch (error) {
+                showMessage('填写失败: ' + error.message, 'error');
+            } finally {
+                fillBtn.disabled = false;
+                fillBtn.textContent = '填写';
+            }
+        });
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = 'message ' + type;
+            if (type === 'success') {
+                setTimeout(() => {
+                    message.className = 'message';
+                }, 3000);
+            }
+        }
+
+        // ===== 群发消息工具逻辑 =====
+        let studentsList = [];
+
+        async function loadStudents() {
+            try {
+                const resp = await fetch('/api/students');
+                studentsList = await resp.json();
+            } catch (e) {
+                console.error('加载学生名单失败:', e);
+            }
+        }
+        loadStudents();
+
+        function getShortName(student) {
+            if (student.nickname) {
+                return student.nickname;
+            }
+            const fullName = student.name;
+            const len = fullName.length;
+            if (len >= 3) {
+                return fullName.slice(-2);
+            } else if (len === 2) {
+                return fullName.slice(-1).repeat(2);
+            }
+            return fullName;
+        }
+
+        document.getElementById('generateMsgBtn').addEventListener('click', () => {
+            const content = document.getElementById('msgContent').value.trim();
+            if (!content) {
+                alert('请输入消息内容');
+                return;
+            }
+            if (studentsList.length === 0) {
+                alert('学生名单为空，请检查config.json');
+                return;
+            }
+
+            const idxColumn = document.getElementById('idxColumn');
+            const nameColumn = document.getElementById('nameColumn');
+            const momColumn = document.getElementById('momColumn');
+            const dadColumn = document.getElementById('dadColumn');
+            idxColumn.innerHTML = '';
+            nameColumn.innerHTML = '';
+            momColumn.innerHTML = '';
+            dadColumn.innerHTML = '';
+
+            studentsList.forEach((student, idx) => {
+                const shortName = getShortName(student);
+                const name = student.name;
+
+                const idxItem = document.createElement('div');
+                idxItem.className = 'msg-item';
+                idxItem.textContent = idx + 1;
+
+                const nameItem = document.createElement('div');
+                nameItem.className = 'msg-item';
+                nameItem.textContent = name;
+                nameItem.addEventListener('click', () => copyText(nameItem, name));
+
+                const momText = shortName + '妈妈，' + content;
+                const dadText = shortName + '爸爸，' + content;
+
+                const momItem = document.createElement('div');
+                momItem.className = 'msg-item';
+                momItem.textContent = momText;
+                momItem.addEventListener('click', () => copyText(momItem, momText));
+
+                const dadItem = document.createElement('div');
+                dadItem.className = 'msg-item';
+                dadItem.textContent = dadText;
+                dadItem.addEventListener('click', () => copyText(dadItem, dadText));
+
+                momColumn.appendChild(momItem);
+                dadColumn.appendChild(dadItem);
+                nameColumn.appendChild(nameItem);
+                idxColumn.appendChild(idxItem);
+            });
+
+            document.getElementById('msgResult').style.display = 'block';
+        });
+
+        function copyText(el, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                el.classList.add('copied');
+                setTimeout(() => el.classList.remove('copied'), 1200);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                el.classList.add('copied');
+                setTimeout(() => el.classList.remove('copied'), 1200);
+            });
+        }
+    </script>
+</body>
+</html>
